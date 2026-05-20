@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>520 限定驚喜 🔐</title>
+    <style>
+        :root {
+            --bg-color: #2b2625;
+            --gold: #d4af37;
+            --gold-dark: #aa8614;
+        }
+
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background-color: var(--bg-color);
+            font-family: 'PingFang TC', 'Microsoft JhengHei', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* Canvas 愛心特效 */
+        canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 999;
+        }
+
+        /* 復古保險箱外觀 */
+        .safe-container {
+            text-align: center;
+            z-index: 10;
+            transition: all 0.8s ease-in-out;
+        }
+
+        .safe-box {
+            width: 280px;
+            height: 320px;
+            background: linear-gradient(135deg, #4a423f, #1f1a19);
+            border: 8px solid #3a3230;
+            border-radius: 10px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.6), inset 0 0 20px rgba(0,0,0,0.5);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            margin-bottom: 20px;
+        }
+
+        /* 復古轉盤 */
+        .dial {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            background: radial-gradient(circle, #8f7226 20%, #443510 80%);
+            border: 6px dashed var(--gold);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+            margin-bottom: 25px;
+            transition: transform 1.5s ease-in-out;
+        }
+
+        .dial.spin {
+            transform: rotate(720deg);
+        }
+
+        /* 提示字與輸入框 */
+        .hint-text {
+            color: #e0d5ce;
+            font-size: 1.1rem;
+            margin-bottom: 15px;
+            letter-spacing: 2px;
+            text-shadow: 1px 1px 3px rgba(0,0,0,0.5);
+        }
+
+        .password-input {
+            width: 160px;
+            padding: 10px;
+            border: 2px solid var(--gold);
+            background-color: #1a1514;
+            color: var(--gold);
+            font-size: 1.3rem;
+            text-align: center;
+            letter-spacing: 5px;
+            border-radius: 5px;
+            outline: none;
+            box-shadow: inset 0 2px 5px rgba(0,0,0,0.8);
+        }
+
+        .password-input::placeholder {
+            color: #61534f;
+            letter-spacing: 1px;
+            font-size: 0.9rem;
+        }
+
+        .error-msg {
+            color: #ff6b6b;
+            font-size: 0.85rem;
+            margin-top: 8px;
+            height: 18px;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        /* 隱藏保險箱動畫 */
+        .safe-container.fade-out {
+            opacity: 0;
+            transform: scale(0.8);
+            pointer-events: none;
+        }
+
+        /* 終身免費吹髮卷樣式 */
+        .ticket-container {
+            position: absolute;
+            opacity: 0;
+            transform: scale(0.5) translateY(50px);
+            transition: all 1s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            pointer-events: none;
+            z-index: 20;
+        }
+
+        .ticket-container.show {
+            opacity: 1;
+            transform: scale(1) translateY(0);
+            pointer-events: auto;
+        }
+
+        .ticket {
+            width: 340px;
+            background: #fffdf7;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+            overflow: hidden;
+            border: 2px solid #f4ebe1;
+            position: relative;
+        }
+
+        /* 票卷鋸齒邊緣效果 */
+        .ticket::before, .ticket::after {
+            content: '';
+            position: absolute;
+            left: 0;
+            right: 0;
+            height: 10px;
+            background-size: 20px 10px;
+        }
+        .ticket::before {
+            top: 0;
+            background-image: radial-gradient(circle at 10px -5px, transparent 12px, #fffdf7 13px);
+        }
+        .ticket::after {
+            bottom: 0;
+            background-image: radial-gradient(circle at 10px 15px, transparent 12px, #fffdf7 13px);
+        }
+
+        .ticket-header {
+            background-color: #d96a6a;
+            color: white;
+            padding: 25px 20px;
+            text-align: center;
+        }
+
+        .ticket-header h1 {
+            margin: 0;
+            font-size: 1.6rem;
+            letter-spacing: 3px;
+        }
+
+        .ticket-body {
+            padding: 30px 25px;
+            text-align: center;
+            color: #554d4a;
+        }
+
+        .ticket-title {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: #c94a4a;
+            margin-bottom: 15px;
+            border-bottom: 2px dashed #eedcd0;
+            padding-bottom: 15px;
+        }
+
+        .ticket-desc {
+            font-size: 0.95rem;
+            line-height: 1.6;
+            margin-bottom: 20px;
+            text-align: left;
+        }
+
+        .ticket-footer {
+            font-size: 0.75rem;
+            color: #a19590;
+            border-top: 1px solid #f0e4da;
+            padding-top: 15px;
+            letter-spacing: 1px;
+        }
+    </style>
+</head>
+<body>
+
+    <canvas id="heartCanvas"></canvas>
+
+    <!-- 保險箱區塊 -->
+    <div class="safe-container" id="safeContainer">
+        <div class="safe-box">
+            <div class="dial" id="safeDial"></div>
+            <div class="hint-text">請輸入紀念日 4 碼以解鎖</div>
+            <input type="password" class="password-input" id="passwordInput" maxlength="4" placeholder="密碼">
+            <div class="error-msg" id="errorMsg">你記成誰的 💔</div>
+        </div>
+    </div>
+
+    <!-- 兌換卷區塊 -->
+    <div class="ticket-container" id="ticketContainer">
+        <div class="ticket">
+            <div class="ticket-header">
+                <h1>HAPPY 520</h1>
+            </div>
+            <div class="ticket-body">
+                <div class="ticket-title">終身免費吹髮卷</div>
+                <div class="ticket-desc">
+                    本券僅限我最可愛的 ゆいちゃん 使用。憑券可無限次使用專屬吹髮服務，無論是洗完頭懶得吹、吹風機太重、還是純粹想享受沙龍待遇，本人均無條件即時接單，溫柔吹乾、附贈親親，終身有效。
+                </div>
+                <div class="ticket-footer">
+                    條款與細則：最終解釋權歸 賢くん 所有，不接受退款，僅接受抱抱。
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --------------- 設定區 -----------------
+        const CORRECT_PASSWORD = "0510"; // 👈 在這裡修改妳們的紀念日四碼！
+        // ---------------------------------------
+
+        const passwordInput = document.getElementById('passwordInput');
+        const errorMsg = document.getElementById('errorMsg');
+        const safeDial = document.getElementById('safeDial');
+        const safeContainer = document.getElementById('safeContainer');
+        const ticketContainer = document.getElementById('ticketContainer');
+        const canvas = document.getElementById('heartCanvas');
+        const ctx = canvas.getContext('2d');
+
+        let hearts = [];
+        let animationId;
+
+        // 監聽輸入
+        passwordInput.addEventListener('input', (e) => {
+            errorMsg.style.opacity = 0;
+            
+            if (e.target.value.length === 4) {
+                if (e.target.value === CORRECT_PASSWORD) {
+                    unlockSafe();
+                } else {
+                    // 密碼錯誤
+                    errorMsg.style.opacity = 1;
+                    passwordInput.value = '';
+                    // 稍微震動一下輸入框的效果
+                    passwordInput.style.transform = 'translateX(10px)';
+                    setTimeout(() => passwordInput.style.transform = 'translateX(-10px)', 50);
+                    setTimeout(() => passwordInput.style.transform = 'translateX(0)', 100);
+                }
+            }
+        });
+
+        // 解鎖成功動畫
+        function unlockSafe() {
+            passwordInput.blur();
+            safeDial.classList.add('spin');
+            
+            setTimeout(() => {
+                safeContainer.classList.add('fade-out');
+                setTimeout(() => {
+                    ticketContainer.classList.add('show');
+                    resizeCanvas();
+                    initHearts();
+                    animateHearts();
+                }, 600);
+            }, 1200);
+        }
+
+        // --------------- Canvas 愛心飄落特效 -----------------
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resizeCanvas);
+
+        class Heart {
+            constructor() {
+                this.x = Math.random() * canvas.width;
+                this.y = Math.random() * canvas.height - canvas.height;
+                this.size = Math.random() * 15 + 10;
+                this.speedY = Math.random() * 2 + 1.5;
+                this.speedX = Math.sin(Math.random() * 2) * 0.5;
+                this.rotation = Math.random() * Math.PI;
+                this.rotationSpeed = Math.random() * 0.02 - 0.01;
+                // 浪漫粉紅/紅調隨機
+                const colors = ['#ff4d6d', '#ff758f', '#ff8fa3', '#ffb3c1', '#ffccd5'];
+                this.color = colors[Math.floor(Math.random() * colors.length)];
+                this.opacity = Math.random() * 0.5 + 0.5;
+            }
+
+            draw() {
+                ctx.save();
+                ctx.translate(this.x, this.y);
+                ctx.rotate(this.rotation);
+                ctx.globalAlpha = this.opacity;
+                ctx.fillStyle = this.color;
+                
+                // 畫心形
+                ctx.beginPath();
+                ctx.moveTo(0, 0);
+                ctx.bezierCurveTo(-this.size / 2, -this.size / 2, -this.size, this.size / 3, 0, this.size);
+                ctx.bezierCurveTo(this.size, this.size / 3, this.size / 2, -this.size / 2, 0, 0);
+                ctx.fill();
+                ctx.restore();
+            }
+
+            update() {
+                this.y += this.speedY;
+                this.x += this.speedX;
+                this.rotation += this.rotationSpeed;
+
+                // 超出螢幕後重置到頂部
+                if (this.y > canvas.height) {
+                    this.y = -this.size;
+                    this.x = Math.random() * canvas.width;
+                }
+            }
+        }
+
+        function initHearts() {
+            for (let i = 0; i < 50; i++) {
+                hearts.push(new Heart());
+            }
+        }
+
+        function animateHearts() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            hearts.forEach(heart => {
+                heart.update();
+                heart.draw();
+            });
+            animationId = requestAnimationFrame(animateHearts);
+        }
+    </script>
+</body>
+</html>
